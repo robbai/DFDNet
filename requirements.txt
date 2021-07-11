@@ -1,0 +1,15 @@
+beautifulsoup4>=4.9.3
+dominate>=2.6.0
+iou>=0.1.0
+matplotlib>=3.2.2
+numpy>=1.18.2
+opencv_python>=4.5.1.48
+Pillow>=8.3.1
+requests>=2.25.1
+scikit_image>=0.18.1
+scipy>=1.4.1
+skimage>=0.0
+torch>=1.8.1+cu101
+torchvision>=0.9.1+cu101
+tqdm>=4.54.1
+visdom>=0.1.8.9
