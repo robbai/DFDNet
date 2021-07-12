@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import multiprocessing
 
 import cv2
 import dlib
@@ -190,6 +191,25 @@ def obtain_inputs(img_path, Landmark_path, img_name):
         "A_paths": A_paths,
         "Part_locations": Part_locations,
     }
+
+
+def worker(Params):
+    (
+        TestImgPath,
+        SaveRestorePath,
+        SaveParamPath,
+        SaveFinalPath,
+        UpScaleWhole,
+        ImgPath,
+    ) = Params
+    ImgName = os.path.split(ImgPath)[-1]
+    WholeInputPath = os.path.join(TestImgPath, ImgName)
+    FaceResultPath = os.path.join(SaveRestorePath, ImgName)
+    ParamPath = os.path.join(SaveParamPath, ImgName + ".npy")
+    SaveWholePath = os.path.join(SaveFinalPath, ImgName)
+    reverse_align(
+        WholeInputPath, FaceResultPath, ParamPath, SaveWholePath, UpScaleWhole
+    )
 
 
 if __name__ == "__main__":
@@ -392,15 +412,25 @@ if __name__ == "__main__":
         for ImgPath in make_dataset(SaveRestorePath)
         if not os.path.exists(os.path.join(SaveFinalPath, os.path.split(ImgPath)[-1]))
     ]
-    for i, ImgPath in enumerate(tqdm(ImgPaths)):
-        ImgName = os.path.split(ImgPath)[-1]
-        WholeInputPath = os.path.join(TestImgPath, ImgName)
-        FaceResultPath = os.path.join(SaveRestorePath, ImgName)
-        ParamPath = os.path.join(SaveParamPath, ImgName + ".npy")
-        SaveWholePath = os.path.join(SaveFinalPath, ImgName)
-        reverse_align(
-            WholeInputPath, FaceResultPath, ParamPath, SaveWholePath, UpScaleWhole
+    Threads: int = max(1, min(len(ImgPaths), int(os.cpu_count() / UpScaleWhole)))
+    print("Using {} thread(s)...\n".format(Threads))
+    pool: multiprocessing.Pool = multiprocessing.Pool(Threads)
+    try:
+        Params = [
+            (
+                TestImgPath,
+                SaveRestorePath,
+                SaveParamPath,
+                SaveFinalPath,
+                UpScaleWhole,
+                ImgPath,
         )
+            for ImgPath in ImgPaths
+        ]
+        for _ in tqdm(pool.imap_unordered(worker, Params), total=len(ImgPaths)):
+            pass
+    except KeyboardInterrupt:
+        exit(1)
 
     if VideoPath:
         args = [
