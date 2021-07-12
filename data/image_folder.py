@@ -29,12 +29,19 @@ def is_image_file(filename):
     return any(filename.endswith(extension) for extension in IMG_EXTENSIONS)
 
 
+def file_sort(fname):
+    try:
+        return int(os.path.splitext(fname)[0])
+    except:
+        return float("inf")
+
+
 def make_dataset(dirs):
     images = []
     assert os.path.isdir(dirs), "%s is not a valid directory" % dirs
 
     for root, _, fnames in sorted(os.walk(dirs)):
-        fnames.sort()
+        fnames.sort(key=file_sort)
         for fname in fnames:
             if is_image_file(fname):
                 path = os.path.join(root, fname)
