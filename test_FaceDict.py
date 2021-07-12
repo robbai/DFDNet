@@ -150,6 +150,24 @@ if __name__ == '__main__':
     ResultsDir = opt.results_dir
     UpScaleWhole = opt.upscale_factor
 
+    # Create results directory tree.
+    SaveInputPath = os.path.join(ResultsDir, 'Step0_Input')
+    SaveCropPath = os.path.join(ResultsDir, 'Step1_CropImg')
+    SaveParamPath = os.path.join(ResultsDir, 'Step1_AffineParam')  # save the inverse affine parameters
+    SaveLandmarkPath = os.path.join(ResultsDir, 'Step2_Landmarks')
+    SaveRestorePath = os.path.join(ResultsDir, 'Step3_RestoreCropFace')  # Only Face Results
+    SaveFianlPath = os.path.join(ResultsDir, 'Step4_FinalResults')
+    for path in (
+        SaveInputPath,
+        SaveCropPath,
+        SaveParamPath,
+        SaveLandmarkPath,
+        SaveRestorePath,
+        SaveFianlPath,
+    ):
+        if not os.path.exists(path):
+            os.makedirs(path)
+
     print('\n###################### Now Running the X {} task ##############################'.format(UpScaleWhole))
 
     #######################################################################
@@ -162,17 +180,8 @@ if __name__ == '__main__':
     detector = dlib.cnn_face_detection_model_v1('./packages/mmod_human_face_detector.dat')
     sp = dlib.shape_predictor('./packages/shape_predictor_5_face_landmarks.dat')
     reference = np.load('./packages/FFHQ_template.npy') / 2
-    SaveInputPath = os.path.join(ResultsDir,'Step0_Input')
-    if not os.path.exists(SaveInputPath):
-        os.makedirs(SaveInputPath)
-    SaveCropPath = os.path.join(ResultsDir,'Step1_CropImg')
-    if not os.path.exists(SaveCropPath):
-        os.makedirs(SaveCropPath)
 
-    SaveParamPath = os.path.join(ResultsDir,'Step1_AffineParam') #save the inverse affine parameters
-    if not os.path.exists(SaveParamPath):
-        os.makedirs(SaveParamPath)
-
+    # Save the inverse affine parameters.
     ImgPaths = make_dataset(TestImgPath)
     for i, ImgPath in enumerate(ImgPaths):
         ImgName = os.path.split(ImgPath)[-1]
@@ -188,15 +197,12 @@ if __name__ == '__main__':
     print('\n###############################################################################')
     print('####################### Step 2: Face Landmark Detection #######################')
     print('###############################################################################\n')
-    
-    SaveLandmarkPath = os.path.join(ResultsDir,'Step2_Landmarks')
+
     if len(opt.gpu_ids) > 0:
         dev = 'cuda:{}'.format(opt.gpu_ids[0])
     else:
         dev = 'cpu'
     FD = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D,device=dev, flip_input=False)
-    if not os.path.exists(SaveLandmarkPath):
-        os.makedirs(SaveLandmarkPath)
     ImgPaths = make_dataset(SaveCropPath)
     for i,ImgPath in enumerate(ImgPaths):
         ImgName = os.path.split(ImgPath)[-1]
@@ -231,9 +237,6 @@ if __name__ == '__main__':
     print('####################### Step 3: Face Restoration ##############################')
     print('###############################################################################\n')
 
-    SaveRestorePath = os.path.join(ResultsDir,'Step3_RestoreCropFace')# Only Face Results
-    if not os.path.exists(SaveRestorePath):
-        os.makedirs(SaveRestorePath)
     model = create_model(opt)
     model.setup(opt)
     # test
@@ -266,9 +269,6 @@ if __name__ == '__main__':
     print('############### Step 4: Paste the Restored Face to the Input Image ############')
     print('###############################################################################\n')
 
-    SaveFianlPath = os.path.join(ResultsDir,'Step4_FinalResults')
-    if not os.path.exists(SaveFianlPath):
-        os.makedirs(SaveFianlPath)
     ImgPaths = make_dataset(SaveRestorePath)
     for i,ImgPath in enumerate(ImgPaths):
         ImgName = os.path.split(ImgPath)[-1]
