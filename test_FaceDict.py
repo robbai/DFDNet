@@ -1,19 +1,16 @@
 import os
 import sys
-import math
-import random
 
 import cv2
 import dlib
 import numpy as np
 import torch
+from tqdm import tqdm
 import torchvision.transforms as transforms
 from PIL import Image
 from skimage import io
 from skimage import transform as trans
 
-from data import CreateDataLoader
-from util import html
 from models import create_model
 from util.visualizer import save_crop
 from data.image_folder import make_dataset
@@ -213,13 +210,9 @@ if __name__ == "__main__":
     # Create results directory tree.
     SaveInputPath = os.path.join(ResultsDir, "Step0_Input")
     SaveCropPath = os.path.join(ResultsDir, "Step1_CropImg")
-    SaveParamPath = os.path.join(
-        ResultsDir, "Step1_AffineParam"
-    )  # save the inverse affine parameters
+    SaveParamPath = os.path.join(ResultsDir, "Step1_AffineParam")
     SaveLandmarkPath = os.path.join(ResultsDir, "Step2_Landmarks")
-    SaveRestorePath = os.path.join(
-        ResultsDir, "Step3_RestoreCropFace"
-    )  # Only Face Results
+    SaveRestorePath = os.path.join(ResultsDir, "Step3_RestoreCropFace")
     SaveFinalPath = os.path.join(ResultsDir, "Step4_FinalResults")
     for path in (
         SaveInputPath,
@@ -262,9 +255,8 @@ if __name__ == "__main__":
             os.path.join(SaveParamPath, os.path.split(ImgPath)[-1] + ".npy")
         )
     ]
-    for i, ImgPath in enumerate(ImgPaths):
+    for i, ImgPath in enumerate(tqdm(ImgPaths)):
         ImgName = os.path.split(ImgPath)[-1]
-        print("Crop and Align {} image".format(ImgName))
         SavePath = os.path.join(SaveCropPath, ImgName)
         SaveInput = os.path.join(SaveInputPath, ImgName)
         SaveParam = os.path.join(
@@ -298,17 +290,16 @@ if __name__ == "__main__":
             os.path.join(SaveLandmarkPath, os.path.split(ImgPath)[-1] + ".txt")
         )
     ]
-    for i, ImgPath in enumerate(ImgPaths):
+    for i, ImgPath in enumerate(tqdm(ImgPaths)):
         ImgName = os.path.split(ImgPath)[-1]
-        print("Detecting {}".format(ImgName))
         Img = io.imread(ImgPath)
         try:
             PredsAll = FD.get_landmarks(Img)
         except:
-            print("\t################ Error in face detection, continue...")
+            print("\n\t################ Error in face detection, continue...")
             continue
         if PredsAll is None:
-            print("\t################ No face, continue...")
+            print("\n\t################ No face, continue...")
             continue
         ins = 0
         if len(PredsAll) != 1:
@@ -316,8 +307,6 @@ if __name__ == "__main__":
             for l in PredsAll:
                 hights.append(l[8, 1] - l[19, 1])
             ins = hights.index(max(hights))
-            # print('\t################ Warning: Detected too many face, only handle the largest one...')
-            # continue
         preds = PredsAll[ins]
         AddLength = np.sqrt(np.sum(np.power(preds[27][0:2] - preds[33][0:2], 2)))
         SaveName = ImgName + ".txt"
@@ -343,14 +332,13 @@ if __name__ == "__main__":
         if not os.path.exists(os.path.join(SaveRestorePath, os.path.split(ImgPath)[-1]))
     ]
     total = 0
-    for i, ImgPath in enumerate(ImgPaths):
+    for i, ImgPath in enumerate(tqdm(ImgPaths)):
         ImgName = os.path.split(ImgPath)[-1]
-        print("Restoring {}".format(ImgName))
         torch.cuda.empty_cache()
         data = obtain_inputs(SaveCropPath, SaveLandmarkPath, ImgName)
         if data == 0:
-            print("\t################ Error in landmark file, continue...")
-            continue  #
+            print("\n\t################ Error in landmark file, continue...")
+            continue
         total = total + 1
         model.set_input(data)
         try:
@@ -358,7 +346,9 @@ if __name__ == "__main__":
             visuals = model.get_current_visuals()
             save_crop(visuals, os.path.join(SaveRestorePath, ImgName))
         except Exception as e:
-            print("\t################ Error in enhancing this image: {}".format(str(e)))
+            print(
+                "\n\t################ Error in enhancing this image: {}".format(str(e))
+            )
             print("\t################ continue...")
             continue
 
@@ -380,9 +370,8 @@ if __name__ == "__main__":
         for ImgPath in make_dataset(SaveRestorePath)
         if not os.path.exists(os.path.join(SaveFinalPath, os.path.split(ImgPath)[-1]))
     ]
-    for i, ImgPath in enumerate(ImgPaths):
+    for i, ImgPath in enumerate(tqdm(ImgPaths)):
         ImgName = os.path.split(ImgPath)[-1]
-        print("Final Restoring {}".format(ImgName))
         WholeInputPath = os.path.join(TestImgPath, ImgName)
         FaceResultPath = os.path.join(SaveRestorePath, ImgName)
         ParamPath = os.path.join(SaveParamPath, ImgName + ".npy")
@@ -391,4 +380,4 @@ if __name__ == "__main__":
             WholeInputPath, FaceResultPath, ParamPath, SaveWholePath, UpScaleWhole
         )
 
-    print("\nAll results are saved in {} \n".format(ResultsDir))
+    print("\nAll results are saved in {}".format(ResultsDir))
