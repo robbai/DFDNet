@@ -43,7 +43,7 @@ class TestOptions(BaseOptions):
         parser.add_argument(
             "--upscale_factor",
             type=int,
-            default=4,
+            default=1,
             help="upscale factor for the whole input image (not for face)",
         )
 
