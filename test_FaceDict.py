@@ -255,7 +255,13 @@ if __name__ == "__main__":
     )
     sp = dlib.shape_predictor("./packages/shape_predictor_5_face_landmarks.dat")
     reference = np.load("./packages/FFHQ_template.npy") / 2
-    ImgPaths = make_dataset(TestImgPath)
+    ImgPaths = [
+        ImgPath
+        for ImgPath in make_dataset(TestImgPath)
+        if not os.path.exists(
+            os.path.join(SaveParamPath, os.path.split(ImgPath)[-1] + ".npy")
+        )
+    ]
     for i, ImgPath in enumerate(ImgPaths):
         ImgName = os.path.split(ImgPath)[-1]
         print("Crop and Align {} image".format(ImgName))
@@ -285,7 +291,13 @@ if __name__ == "__main__":
     FD = face_alignment.FaceAlignment(
         face_alignment.LandmarksType._2D, device=dev, flip_input=False
     )
-    ImgPaths = make_dataset(SaveCropPath)
+    ImgPaths = [
+        ImgPath
+        for ImgPath in make_dataset(SaveCropPath)
+        if not os.path.exists(
+            os.path.join(SaveLandmarkPath, os.path.split(ImgPath)[-1] + ".txt")
+        )
+    ]
     for i, ImgPath in enumerate(ImgPaths):
         ImgName = os.path.split(ImgPath)[-1]
         print("Detecting {}".format(ImgName))
@@ -325,7 +337,11 @@ if __name__ == "__main__":
     )
     model = create_model(opt)
     model.setup(opt)
-    ImgPaths = make_dataset(SaveCropPath)
+    ImgPaths = [
+        ImgPath
+        for ImgPath in make_dataset(SaveCropPath)
+        if not os.path.exists(os.path.join(SaveRestorePath, os.path.split(ImgPath)[-1]))
+    ]
     total = 0
     for i, ImgPath in enumerate(ImgPaths):
         ImgName = os.path.split(ImgPath)[-1]
@@ -359,7 +375,11 @@ if __name__ == "__main__":
         "###############################################################################\n"
     )
 
-    ImgPaths = make_dataset(SaveRestorePath)
+    ImgPaths = [
+        ImgPath
+        for ImgPath in make_dataset(SaveRestorePath)
+        if not os.path.exists(os.path.join(SaveFinalPath, os.path.split(ImgPath)[-1]))
+    ]
     for i, ImgPath in enumerate(ImgPaths):
         ImgName = os.path.split(ImgPath)[-1]
         print("Final Restoring {}".format(ImgName))
