@@ -133,7 +133,8 @@ def obtain_inputs(img_path, Landmark_path, img_name):
     A = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(A) #
     C = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(C) #
     return {'A':A.unsqueeze(0), 'C':C.unsqueeze(0), 'A_paths': A_paths,'Part_locations': Part_locations}
-    
+
+
 if __name__ == '__main__':
     opt = TestOptions().parse()
     opt.nThreads = 1   # test code only supports nThreads = 1
@@ -176,19 +177,16 @@ if __name__ == '__main__':
     print('\n###############################################################################')
     print('####################### Step 1: Crop and Align Face ###########################')
     print('###############################################################################\n')
-    
     detector = dlib.cnn_face_detection_model_v1('./packages/mmod_human_face_detector.dat')
     sp = dlib.shape_predictor('./packages/shape_predictor_5_face_landmarks.dat')
     reference = np.load('./packages/FFHQ_template.npy') / 2
-
-    # Save the inverse affine parameters.
     ImgPaths = make_dataset(TestImgPath)
     for i, ImgPath in enumerate(ImgPaths):
         ImgName = os.path.split(ImgPath)[-1]
         print('Crop and Align {} image'.format(ImgName))
         SavePath = os.path.join(SaveCropPath,ImgName)
         SaveInput = os.path.join(SaveInputPath,ImgName)
-        SaveParam = os.path.join(SaveParamPath, ImgName+'.npy')
+        SaveParam = os.path.join(SaveParamPath, ImgName+'.npy')  # Save the inverse affine parameters.
         align_and_save(ImgPath, SavePath, SaveInput, SaveParam, UpScaleWhole)
 
     #######################################################################
@@ -197,7 +195,6 @@ if __name__ == '__main__':
     print('\n###############################################################################')
     print('####################### Step 2: Face Landmark Detection #######################')
     print('###############################################################################\n')
-
     if len(opt.gpu_ids) > 0:
         dev = 'cuda:{}'.format(opt.gpu_ids[0])
     else:
@@ -232,14 +229,11 @@ if __name__ == '__main__':
     #######################################################################
     ####################### Step 3: Face Restoration ######################
     #######################################################################
-
     print('\n###############################################################################')
     print('####################### Step 3: Face Restoration ##############################')
     print('###############################################################################\n')
-
     model = create_model(opt)
     model.setup(opt)
-    # test
     ImgPaths = make_dataset(SaveCropPath)
     total = 0
     for i, ImgPath in enumerate(ImgPaths):
@@ -264,7 +258,6 @@ if __name__ == '__main__':
     #######################################################################
     ############ Step 4: Paste the Results to the Input Image #############
     #######################################################################
-    
     print('\n###############################################################################')
     print('############### Step 4: Paste the Restored Face to the Input Image ############')
     print('###############################################################################\n')
@@ -280,4 +273,3 @@ if __name__ == '__main__':
         reverse_align(WholeInputPath, FaceResultPath, ParamPath, SaveWholePath, UpScaleWhole)
 
     print('\nAll results are saved in {} \n'.format(ResultsDir))
-    
