@@ -62,7 +62,8 @@ def align_and_save(
     M = tform.params[0:2, :]
     crop_img = cv2.warpAffine(img, M, out_size)
     io.imsave(save_path, crop_img)  # save the crop and align face
-    io.imsave(save_input_path, img)  # save the whole input image
+    if save_input_path:
+        io.imsave(save_input_path, img)  # save the whole input image
     tform2 = trans.SimilarityTransform()
     tform2.estimate(reference, source * upsample_scale)
     # inv_M = cv2.invertAffineTransform(M)
@@ -263,15 +264,18 @@ if __name__ == "__main__":
     if any(TestImgPath.endswith("." + ext) for ext in ("mp4", "webm", "mkv")):
         assert UpScaleWhole == 1
         VideoPath = TestImgPath
-        args = [
-            "ffmpeg",
-            "-i",
-            "{}".format(TestImgPath),
-            "{}\\%d.png".format(SaveInputPath),
-        ]
-        print(" ".join(args))
-        subprocess.run(args)
         TestImgPath = SaveInputPath
+        if len(make_dataset(TestImgPath)) != int(
+            cv2.VideoCapture(VideoPath).get(cv2.CAP_PROP_FRAME_COUNT)
+        ):
+            args = [
+                "ffmpeg",
+                "-i",
+                "{}".format(TestImgPath),
+                "{}\\%d.png".format(SaveInputPath),
+            ]
+            print(" ".join(args))
+            subprocess.run(args)
 
     #######################################################################
     ###########Step 1: Crop and Align Face from the whole Image ###########
@@ -304,7 +308,9 @@ if __name__ == "__main__":
         SaveParam = os.path.join(
             SaveParamPath, ImgName + ".npy"
         )  # Save the inverse affine parameters.
-        align_and_save(ImgPath, SavePath, SaveInput, SaveParam, UpScaleWhole)
+        align_and_save(
+            ImgPath, SavePath, None if VideoPath else SaveInput, SaveParam, UpScaleWhole
+        )
 
     #######################################################################
     ####### Step 2: Face Landmark Detection from the Cropped Image ########
@@ -424,7 +430,7 @@ if __name__ == "__main__":
                 SaveFinalPath,
                 UpScaleWhole,
                 ImgPath,
-        )
+            )
             for ImgPath in ImgPaths
         ]
         for _ in tqdm(pool.imap_unordered(worker, Params), total=len(ImgPaths)):
