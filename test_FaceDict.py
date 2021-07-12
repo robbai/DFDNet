@@ -1,5 +1,6 @@
 import os
 import sys
+import subprocess
 
 import cv2
 import dlib
@@ -231,6 +232,21 @@ if __name__ == "__main__":
         )
     )
 
+    # Video input.
+    VideoPath = None
+    if any(TestImgPath.endswith("." + ext) for ext in ("mp4", "webm", "mkv")):
+        assert UpScaleWhole == 1
+        VideoPath = TestImgPath
+        args = [
+            "ffmpeg",
+            "-i",
+            "{}".format(TestImgPath),
+            "{}\\%d.png".format(SaveInputPath),
+        ]
+        print(" ".join(args))
+        subprocess.run(args)
+        TestImgPath = SaveInputPath
+
     #######################################################################
     ###########Step 1: Crop and Align Face from the whole Image ###########
     #######################################################################
@@ -379,5 +395,24 @@ if __name__ == "__main__":
         reverse_align(
             WholeInputPath, FaceResultPath, ParamPath, SaveWholePath, UpScaleWhole
         )
+
+    if VideoPath:
+        args = [
+            "ffmpeg",
+            "-i",
+            "{}".format(VideoPath),
+            "-framerate",
+            str(cv2.VideoCapture(VideoPath).get(cv2.CAP_PROP_FPS)),
+            "-i",
+            "{}\\%d.png".format(SaveFinalPath),
+            "-map",
+            "0:a",
+            "-map",
+            "1:v",
+            "-y",
+            "{}\\{}".format(ResultsDir, os.path.split(VideoPath)[-1]),
+        ]
+        print(" ".join(args))
+        subprocess.run(args)
 
     print("\nAll results are saved in {}".format(ResultsDir))
