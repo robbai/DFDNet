@@ -1,13 +1,16 @@
 import unittest
-from face_alignment.utils import *
+
 import numpy as np
 import torch
+from face_alignment.utils import *
 
 
 class Tester(unittest.TestCase):
     def test_flip_is_label(self):
         # Generate the points
-        heatmaps = torch.from_numpy(np.random.randint(1, high=250, size=(68, 64, 64)).astype('float32'))
+        heatmaps = torch.from_numpy(
+            np.random.randint(1, high=250, size=(68, 64, 64)).astype("float32")
+        )
 
         flipped_heatmaps = flip(flip(heatmaps.clone(), is_label=True), is_label=True)
 
@@ -20,7 +23,9 @@ class Tester(unittest.TestCase):
         assert np.allclose(fake_image.numpy(), fliped_fake_image.numpy())
 
     def test_getpreds(self):
-        pts = torch.from_numpy(np.random.randint(1, high=63, size=(68, 2)).astype('float32'))
+        pts = torch.from_numpy(
+            np.random.randint(1, high=63, size=(68, 2)).astype("float32")
+        )
 
         heatmaps = np.zeros((68, 256, 256))
         for i in range(68):
@@ -32,5 +37,6 @@ class Tester(unittest.TestCase):
 
         assert np.allclose(pts.numpy(), preds.numpy(), atol=5)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

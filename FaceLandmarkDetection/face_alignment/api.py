@@ -1,19 +1,21 @@
 from __future__ import print_function
+
 import os
-import torch
-from torch.utils.model_zoo import load_url
 from enum import Enum
-from skimage import io
-from skimage import color
-import numpy as np
+
 import cv2
+import numpy as np
+import torch
+from skimage import io, color
+from torch.utils.model_zoo import load_url
+
 try:
     import urllib.request as request_file
 except BaseException:
     import urllib as request_file
 
-from .models import FAN, ResNetDepth
 from .utils import *
+from .models import FAN, ResNetDepth
 
 
 class LandmarksType(Enum):
@@ -24,6 +26,7 @@ class LandmarksType(Enum):
     ``_3D`` - detect the points ``(x,y,z)``` in a 3D space
 
     """
+
     _2D = 1
     _2halfD = 2
     _3D = 3
@@ -43,16 +46,24 @@ class NetworkSize(Enum):
     def __int__(self):
         return self.value
 
+
 models_urls = {
-    '2DFAN-4': 'https://www.adrianbulat.com/downloads/python-fan/2DFAN4-11f355bf06.pth.tar',
-    '3DFAN-4': 'https://www.adrianbulat.com/downloads/python-fan/3DFAN4-7835d9f11d.pth.tar',
-    'depth': 'https://www.adrianbulat.com/downloads/python-fan/depth-2a464da4ea.pth.tar',
+    "2DFAN-4": "https://www.adrianbulat.com/downloads/python-fan/2DFAN4-11f355bf06.pth.tar",
+    "3DFAN-4": "https://www.adrianbulat.com/downloads/python-fan/3DFAN4-7835d9f11d.pth.tar",
+    "depth": "https://www.adrianbulat.com/downloads/python-fan/depth-2a464da4ea.pth.tar",
 }
 
 
 class FaceAlignment:
-    def __init__(self, landmarks_type, network_size=NetworkSize.LARGE,
-                 device='cuda', flip_input=False, face_detector='sfd', verbose=False):
+    def __init__(
+        self,
+        landmarks_type,
+        network_size=NetworkSize.LARGE,
+        device="cuda",
+        flip_input=False,
+        face_detector="sfd",
+        verbose=False,
+    ):
         self.device = device
         self.flip_input = flip_input
         self.landmarks_type = landmarks_type
@@ -60,22 +71,31 @@ class FaceAlignment:
 
         network_size = int(network_size)
 
-        if 'cuda' in device:
+        if "cuda" in device:
             torch.backends.cudnn.benchmark = True
 
         # Get the face detector
-        face_detector_module = __import__('face_alignment.detection.' + face_detector,
-                                          globals(), locals(), [face_detector], 0)
-        self.face_detector = face_detector_module.FaceDetector(device=device, verbose=verbose)
+        face_detector_module = __import__(
+            "face_alignment.detection." + face_detector,
+            globals(),
+            locals(),
+            [face_detector],
+            0,
+        )
+        self.face_detector = face_detector_module.FaceDetector(
+            device=device, verbose=verbose
+        )
 
         # Initialise the face alignemnt networks
         self.face_alignment_net = FAN(network_size)
         if landmarks_type == LandmarksType._2D:
-            network_name = '2DFAN-' + str(network_size)
+            network_name = "2DFAN-" + str(network_size)
         else:
-            network_name = '3DFAN-' + str(network_size)
+            network_name = "3DFAN-" + str(network_size)
 
-        fan_weights = load_url(models_urls[network_name], map_location=lambda storage, loc: storage)
+        fan_weights = load_url(
+            models_urls[network_name], map_location=lambda storage, loc: storage
+        )
         self.face_alignment_net.load_state_dict(fan_weights)
 
         self.face_alignment_net.to(device)
@@ -85,10 +105,13 @@ class FaceAlignment:
         if landmarks_type == LandmarksType._3D:
             self.depth_prediciton_net = ResNetDepth()
 
-            depth_weights = load_url(models_urls['depth'], map_location=lambda storage, loc: storage)
+            depth_weights = load_url(
+                models_urls["depth"], map_location=lambda storage, loc: storage
+            )
             depth_dict = {
-                k.replace('module.', ''): v for k,
-                v in depth_weights['state_dict'].items()}
+                k.replace("module.", ""): v
+                for k, v in depth_weights["state_dict"].items()
+            }
             self.depth_prediciton_net.load_state_dict(depth_dict)
 
             self.depth_prediciton_net.to(device)
@@ -134,7 +157,9 @@ class FaceAlignment:
             image = image[..., :3]
 
         if detected_faces is None:
-            detected_faces = self.face_detector.detect_from_image(image[..., ::-1].copy())
+            detected_faces = self.face_detector.detect_from_image(
+                image[..., ::-1].copy()
+            )
 
         if len(detected_faces) == 0:
             print("Warning: No faces were detected.")
@@ -144,21 +169,22 @@ class FaceAlignment:
         landmarks = []
         for i, d in enumerate(detected_faces):
             center = torch.FloatTensor(
-                [d[2] - (d[2] - d[0]) / 2.0, d[3] - (d[3] - d[1]) / 2.0])
+                [d[2] - (d[2] - d[0]) / 2.0, d[3] - (d[3] - d[1]) / 2.0]
+            )
             center[1] = center[1] - (d[3] - d[1]) * 0.12
             scale = (d[2] - d[0] + d[3] - d[1]) / self.face_detector.reference_scale
 
             inp = crop(image, center, scale)
-            inp = torch.from_numpy(inp.transpose(
-                (2, 0, 1))).float()
+            inp = torch.from_numpy(inp.transpose((2, 0, 1))).float()
 
             inp = inp.to(self.device)
             inp.div_(255.0).unsqueeze_(0)
 
             out = self.face_alignment_net(inp)[-1].detach()
             if self.flip_input:
-                out += flip(self.face_alignment_net(flip(inp))
-                            [-1].detach(), is_label=True)
+                out += flip(
+                    self.face_alignment_net(flip(inp))[-1].detach(), is_label=True
+                )
             out = out.cpu()
 
             pts, pts_img = get_preds_fromhm(out, center, scale)
@@ -168,23 +194,29 @@ class FaceAlignment:
                 heatmaps = np.zeros((68, 256, 256), dtype=np.float32)
                 for i in range(68):
                     if pts[i, 0] > 0:
-                        heatmaps[i] = draw_gaussian(
-                            heatmaps[i], pts[i], 2)
-                heatmaps = torch.from_numpy(
-                    heatmaps).unsqueeze_(0)
+                        heatmaps[i] = draw_gaussian(heatmaps[i], pts[i], 2)
+                heatmaps = torch.from_numpy(heatmaps).unsqueeze_(0)
 
                 heatmaps = heatmaps.to(self.device)
-                depth_pred = self.depth_prediciton_net(
-                    torch.cat((inp, heatmaps), 1)).data.cpu().view(68, 1)
+                depth_pred = (
+                    self.depth_prediciton_net(torch.cat((inp, heatmaps), 1))
+                    .data.cpu()
+                    .view(68, 1)
+                )
                 pts_img = torch.cat(
-                    (pts_img, depth_pred * (1.0 / (256.0 / (200.0 * scale)))), 1)
+                    (pts_img, depth_pred * (1.0 / (256.0 / (200.0 * scale)))), 1
+                )
 
             landmarks.append(pts_img.numpy())
 
         return landmarks
 
-    def get_landmarks_from_directory(self, path, extensions=['.jpg', '.png'], recursive=True, show_progress_bar=True):
-        detected_faces = self.face_detector.detect_from_directory(path, extensions, recursive, show_progress_bar)
+    def get_landmarks_from_directory(
+        self, path, extensions=[".jpg", ".png"], recursive=True, show_progress_bar=True
+    ):
+        detected_faces = self.face_detector.detect_from_directory(
+            path, extensions, recursive, show_progress_bar
+        )
 
         predictions = {}
         for image_path, bounding_boxes in detected_faces.items():
@@ -196,12 +228,12 @@ class FaceAlignment:
 
     @staticmethod
     def remove_models(self):
-        base_path = os.path.join(appdata_dir('face_alignment'), "data")
+        base_path = os.path.join(appdata_dir("face_alignment"), "data")
         for data_model in os.listdir(base_path):
             file_path = os.path.join(base_path, data_model)
             try:
                 if os.path.isfile(file_path):
-                    print('Removing ' + data_model + ' ...')
+                    print("Removing " + data_model + " ...")
                     os.unlink(file_path)
             except Exception as e:
                 print(e)

@@ -1,12 +1,12 @@
 ## [Blind Face Restoration via Deep Multi-scale Component Dictionaries](https://arxiv.org/pdf/2008.00418.pdf)
 
->##### __Note: This branch contains all the restoration results, including 512×512 face region and the final result by putting the enhanced face to the origial input. The former version that can only generate the face result is put in [master branch](https://github.com/csxmli2016/DFDNet/tree/master)__ 
+>##### __Note: This branch contains all the restoration results, including 512×512 face region and the final result by putting the enhanced face to the origial input. The former version that can only generate the face result is put in [master branch](https://github.com/csxmli2016/DFDNet/tree/master)__
 
 
 <p>
 Overview of our proposed method. It mainly contains two parts: (a) the off-line generation of multi-scale component dictionaries from large amounts of high-quality images, which have diverse poses and expressions. K-means is adopted to generate K clusters for each component (i.e., left/right eyes, nose and mouth) on different feature scales. (b) The restoration process and dictionary feature transfer (DFT) block that are utilized to provide the reference details in a progressive manner. Here, DFT-i block takes the Scale-i component dictionaries for reference in the same feature level.
-</p>  
-    
+</p>
+
 
 <img src="./Imgs/pipeline_a.png">
 <p align="center">(a) Offline generation of multi-scale component dictionaries.</p>
@@ -20,11 +20,11 @@ Downloading from the following url and put them into ./.
 - [GoogleDrive](https://drive.google.com/drive/folders/1bayYIUMCSGmoFPyd4Uu2Uwn347RW-vl5?usp=sharing)
 
 The folder structure should be:
-    
+
     .
-    ├── checkpoints                    
-    │   ├── facefh_dictionary                  
-    │   │   └── latest_net_G.pth   
+    ├── checkpoints
+    │   ├── facefh_dictionary
+    │   │   └── latest_net_G.pth
     ├── weights
     │   └── vgg19.pth
     ├── DictionaryCenter512
@@ -35,7 +35,7 @@ The folder structure should be:
     │   └── ...
     └── ...
 
-## Prerequisites 
+## Prerequisites
 >([Video Installation Tutorial](https://www.youtube.com/watch?v=OTqGYMSKGF4). Thanks for [bycloudump](https://www.youtube.com/channel/UCfg9ux4m8P0YDITTPptrmLg)'s tremendous help.)
 - Pytorch (≥1.1 is recommended)
 - dlib
@@ -48,11 +48,11 @@ The folder structure should be:
     python setup.py install
     cd ..
     ```
-    
+
 
 ## Testing
 ```bash
-python test_FaceDict.py --test_path ./TestData/TestWhole --results_dir ./Results/TestWholeResults --upscale_factor 4 --gpu_ids 0 
+python test_FaceDict.py --test_path ./TestData/TestWhole --results_dir ./Results/TestWholeResults --upscale_factor 4 --gpu_ids 0
 ```
 #### __Four parameters can be changed for flexible usage:__
 ```
@@ -148,7 +148,7 @@ python test_FaceDict.py --test_path ./TestData/TestWhole --results_dir ./Results
    <img src='./Imgs/Whole/test5_3.jpg'>
   </td>
  </tr>
-  
+
  </table>
 
 ## TO DO LIST (if possible)
@@ -168,4 +168,3 @@ year = {2020}
 ```
 
 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
-

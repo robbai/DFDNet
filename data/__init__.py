@@ -1,8 +1,10 @@
 # -- coding: utf-8 --
 import importlib
+
 import torch.utils.data
-from data.base_data_loader import BaseDataLoader
+
 from data.base_dataset import BaseDataset
+from data.base_data_loader import BaseDataLoader
 
 
 def find_dataset_using_name(dataset_name):
@@ -17,20 +19,22 @@ def find_dataset_using_name(dataset_name):
     # be instantiated. It has to be a subclass of BaseDataset,
     # and it is case-insensitive.
     dataset = None
-    target_dataset_name = dataset_name.replace('_', '') + 'dataset'
+    target_dataset_name = dataset_name.replace("_", "") + "dataset"
     for name, cls in datasetlib.__dict__.items():
-        if name.lower() == target_dataset_name.lower() \
-           and issubclass(cls, BaseDataset):
+        if name.lower() == target_dataset_name.lower() and issubclass(cls, BaseDataset):
             dataset = cls
-            
+
     if dataset is None:
-        print("In %s.py, there should be a subclass of BaseDataset with class name that matches %s in lowercase." % (dataset_filename, target_dataset_name))
+        print(
+            "In %s.py, there should be a subclass of BaseDataset with class name that matches %s in lowercase."
+            % (dataset_filename, target_dataset_name)
+        )
         exit(0)
 
     return dataset
 
 
-def get_option_setter(dataset_name):    
+def get_option_setter(dataset_name):
     dataset_class = find_dataset_using_name(dataset_name)
     return dataset_class.modify_commandline_options
 
@@ -53,7 +57,7 @@ def CreateDataLoader(opt):
 # multi-threaded data loading
 class CustomDatasetDataLoader(BaseDataLoader):
     def name(self):
-        return 'CustomDatasetDataLoader'
+        return "CustomDatasetDataLoader"
 
     def initialize(self, opt):
         BaseDataLoader.initialize(self, opt)
@@ -62,10 +66,11 @@ class CustomDatasetDataLoader(BaseDataLoader):
             self.dataset,
             batch_size=opt.batchSize,
             shuffle=not opt.serial_batches,
-            num_workers=int(opt.nThreads))
-            # DataLoader(dataset, batch_size=1, shuffle=False, sampler=None, num_workers=0, collate_fn=default_collate, pin_memory=False, drop_last=False)
-            # 加载的数据集,DataSet对象,是否打乱,样本抽样,使用多线程加载的进程数,0表示不使用多线程,如何将多样本数据拼接成一个batch,是否将数据保存到pin memory，dataset种数据可数可能不是\
-            # 一个batch_size的整数倍,drop_last 为True将多出来不足一个batch的数据丢弃
+            num_workers=int(opt.nThreads),
+        )
+        # DataLoader(dataset, batch_size=1, shuffle=False, sampler=None, num_workers=0, collate_fn=default_collate, pin_memory=False, drop_last=False)
+        # 加载的数据集,DataSet对象,是否打乱,样本抽样,使用多线程加载的进程数,0表示不使用多线程,如何将多样本数据拼接成一个batch,是否将数据保存到pin memory，dataset种数据可数可能不是\
+        # 一个batch_size的整数倍,drop_last 为True将多出来不足一个batch的数据丢弃
 
     def load_data(self):
         return self

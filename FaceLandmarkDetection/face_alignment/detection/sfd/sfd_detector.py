@@ -1,15 +1,15 @@
 import os
+
 import cv2
 from torch.utils.model_zoo import load_url
 
-from ..core import FaceDetector
-
-from .net_s3fd import s3fd
 from .bbox import *
+from ..core import FaceDetector
 from .detect import *
+from .net_s3fd import s3fd
 
 models_urls = {
-    's3fd': 'https://www.adrianbulat.com/downloads/python-fan/s3fd-619a316812.pth',
+    "s3fd": "https://www.adrianbulat.com/downloads/python-fan/s3fd-619a316812.pth",
 }
 
 
@@ -19,7 +19,7 @@ class SFDDetector(FaceDetector):
 
         # Initialise the face detector
         if path_to_detector is None:
-            model_weights = load_url(models_urls['s3fd'])
+            model_weights = load_url(models_urls["s3fd"])
         else:
             model_weights = torch.load(path_to_detector)
 

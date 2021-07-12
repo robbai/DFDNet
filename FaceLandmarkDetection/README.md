@@ -2,7 +2,7 @@
 
 Detect facial landmarks from Python using the world's most accurate face alignment network, capable of detecting points in both 2D and 3D coordinates.
 
-Build using [FAN](https://www.adrianbulat.com)'s state-of-the-art deep learning based face alignment method. 
+Build using [FAN](https://www.adrianbulat.com)'s state-of-the-art deep learning based face alignment method.
 
 <p align="center"><img src="docs/images/face-alignment-adrian.gif" /></p>
 
