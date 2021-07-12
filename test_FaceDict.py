@@ -208,6 +208,12 @@ if __name__ == "__main__":
     ResultsDir = opt.results_dir
     UpScaleWhole = opt.upscale_factor
 
+    if not TestImgPath or not ResultsDir:
+        print(
+            'Correct usage: python test_FaceDict.py --test_path "TestData/TestWhole" --results_dir "Results/TestWholeResults" --upscale_factor 4 --gpu_ids -1'
+        )
+        exit()
+
     # Create results directory tree.
     SaveInputPath = os.path.join(ResultsDir, "Step0_Input")
     SaveCropPath = os.path.join(ResultsDir, "Step1_CropImg")

@@ -31,13 +31,13 @@ class TestOptions(BaseOptions):
         parser.add_argument(
             "--test_path",
             type=str,
-            default="./TestData/TestWhole",
+            default=None,
             help="test images path",
         )
         parser.add_argument(
             "--results_dir",
             type=str,
-            default="./Results/TestWholeResults",
+            default=None,
             help="saves results here.",
         )
         parser.add_argument(
