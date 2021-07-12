@@ -220,14 +220,14 @@ if __name__ == "__main__":
     SaveRestorePath = os.path.join(
         ResultsDir, "Step3_RestoreCropFace"
     )  # Only Face Results
-    SaveFianlPath = os.path.join(ResultsDir, "Step4_FinalResults")
+    SaveFinalPath = os.path.join(ResultsDir, "Step4_FinalResults")
     for path in (
         SaveInputPath,
         SaveCropPath,
         SaveParamPath,
         SaveLandmarkPath,
         SaveRestorePath,
-        SaveFianlPath,
+        SaveFinalPath,
     ):
         if not os.path.exists(path):
             os.makedirs(path)
@@ -366,7 +366,7 @@ if __name__ == "__main__":
         WholeInputPath = os.path.join(TestImgPath, ImgName)
         FaceResultPath = os.path.join(SaveRestorePath, ImgName)
         ParamPath = os.path.join(SaveParamPath, ImgName + ".npy")
-        SaveWholePath = os.path.join(SaveFianlPath, ImgName)
+        SaveWholePath = os.path.join(SaveFinalPath, ImgName)
         reverse_align(
             WholeInputPath, FaceResultPath, ParamPath, SaveWholePath, UpScaleWhole
         )
