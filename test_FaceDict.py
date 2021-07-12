@@ -301,16 +301,32 @@ if __name__ == "__main__":
             os.path.join(SaveParamPath, os.path.split(ImgPath)[-1] + ".npy")
         )
     ]
-    for i, ImgPath in enumerate(tqdm(ImgPaths)):
-        ImgName = os.path.split(ImgPath)[-1]
-        SavePath = os.path.join(SaveCropPath, ImgName)
-        SaveInput = os.path.join(SaveInputPath, ImgName)
-        SaveParam = os.path.join(
-            SaveParamPath, ImgName + ".npy"
-        )  # Save the inverse affine parameters.
-        align_and_save(
-            ImgPath, SavePath, None if VideoPath else SaveInput, SaveParam, UpScaleWhole
-        )
+    for ImgPath in tqdm(ImgPaths):
+        for _ in range(2):
+            ImgName = os.path.split(ImgPath)[-1]
+            SavePath = os.path.join(SaveCropPath, ImgName)
+            SaveInput = os.path.join(SaveInputPath, ImgName)
+            SaveParam = os.path.join(
+                SaveParamPath, ImgName + ".npy"
+            )  # Save the inverse affine parameters.
+            try:
+                align_and_save(
+                    ImgPath,
+                    SavePath,
+                    None if VideoPath else SaveInput,
+                    SaveParam,
+                    UpScaleWhole,
+                )
+            except Exception as e:
+                if isinstance(e, KeyboardInterrupt):
+                    exit()
+                elif "cudaGetLastError()" not in str(e):
+                    print(
+                        "\n\t################ Error in extracting from this image: {}".format(
+                            ImgName
+                        )
+                    )
+                    break
 
     #######################################################################
     ####### Step 2: Face Landmark Detection from the Cropped Image ########
@@ -393,9 +409,9 @@ if __name__ == "__main__":
             model.test()
             visuals = model.get_current_visuals()
             save_crop(visuals, os.path.join(SaveRestorePath, ImgName))
-        except Exception as e:
+        except:
             print(
-                "\n\t################ Error in enhancing this image: {}".format(str(e))
+                "\n\t################ Error in enhancing this image: {}".format(ImgName)
             )
             print("\t################ continue...")
             continue
