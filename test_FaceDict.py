@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import subprocess
 import multiprocessing
 
@@ -388,8 +389,11 @@ if __name__ == "__main__":
     print(
         "###############################################################################\n"
     )
+    print(f"Loading {UpScaleWhole}x model...")
+    start_time: float = time.time()
     model = create_model(opt)
     model.setup(opt)
+    print("Loaded model, took {:.2f} seconds.\n".format(time.time() - start_time))
     ImgPaths = [
         ImgPath
         for ImgPath in make_dataset(SaveCropPath)
