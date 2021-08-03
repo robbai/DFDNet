@@ -254,6 +254,16 @@ if __name__ == "__main__":
     ):
         if not os.path.exists(path):
             os.makedirs(path)
+    with open(os.path.join(ResultsDir, "Script.bat"), "w") as file:
+        file.write(
+            'cd {}\npython test_FaceDict.py --test_path "{}" --results_dir "{}" --upscale_factor {} --gpu_ids {}\n'.format(
+                os.path.split(os.path.abspath(__file__))[0],
+                os.path.abspath(TestImgPath),
+                os.path.abspath(ResultsDir),
+                UpScaleWhole,
+                opt.gpu_ids[0] if opt.gpu_ids else -1,
+            )
+        )
 
     print(
         "\n###################### Now Running the X {} task ##############################".format(
