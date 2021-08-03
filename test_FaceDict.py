@@ -1,5 +1,6 @@
 import os
 import sys
+import shutil
 import time
 import subprocess
 import multiprocessing
@@ -269,13 +270,14 @@ if __name__ == "__main__":
         if len(make_dataset(TestImgPath)) != int(
             cv2.VideoCapture(VideoPath).get(cv2.CAP_PROP_FRAME_COUNT)
         ):
+            # Extract frames to input folder.
+            print("\nExtracting video frames...\n")
             args = [
                 "ffmpeg",
                 "-i",
-                "{}".format(TestImgPath),
+                "{}".format(VideoPath),
                 "{}\\%d.png".format(SaveInputPath),
             ]
-            print(" ".join(args))
             subprocess.run(args)
 
     #######################################################################
@@ -458,7 +460,23 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         exit(1)
 
+    # Video output.
     if VideoPath:
+        print("\nCombining final frames with input frames...\n")
+        FramesPath = os.path.join(ResultsDir, "TemporaryFrames")
+        if not os.path.exists(FramesPath):
+            os.makedirs(FramesPath)
+        FramesPathNames = {
+            os.path.basename(ImgPath): ImgPath
+            for ImgPath in make_dataset(SaveInputPath)
+        }
+        for ImgPath in make_dataset(SaveFinalPath):
+            FramesPathNames[os.path.basename(ImgPath)] = ImgPath
+        for FramePathName, FramePath in tqdm(FramesPathNames.items()):
+            shutil.copyfile(FramePath, os.path.join(FramesPath, FramePathName))
+
+        # Make video.
+        print("\nCreating video...\n")
         args = [
             "ffmpeg",
             "-i",
@@ -466,7 +484,7 @@ if __name__ == "__main__":
             "-framerate",
             str(cv2.VideoCapture(VideoPath).get(cv2.CAP_PROP_FPS)),
             "-i",
-            "{}\\%d.png".format(SaveFinalPath),
+            "{}\\%d.png".format(FramesPath),
             "-map",
             "0:a",
             "-map",
@@ -474,7 +492,6 @@ if __name__ == "__main__":
             "-y",
             "{}\\{}".format(ResultsDir, os.path.split(VideoPath)[-1]),
         ]
-        print(" ".join(args))
         subprocess.run(args)
 
     print("\nAll results are saved in {}".format(ResultsDir))
